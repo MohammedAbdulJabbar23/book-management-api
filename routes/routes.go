@@ -5,12 +5,19 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+func SetupRouter() *gin.Engine {
+    r := gin.Default()
 
+    r.POST("/register", controllers.Register)
+    r.POST("/login", controllers.Login)
 
-func SetupRoutes(router *gin.Engine) {
-	router.GET("/books", controllers.FindBooks);
-	router.POST("/books", controllers.CreateBook);
-	router.GET("/books/:id",controllers.FindBook);
-	router.PUT("/books/:id", controllers.UpdateBook);
-	router.DELETE("/books/:id",controllers.DeleteBook);
+    authorized := r.Group("/")
+    authorized.Use(controllers.AuthMiddleware())
+    {
+        authorized.POST("/books", controllers.CreateBook);
+        authorized.GET("/books", controllers.FindBooks);
+        // authorized.POST("/books/:id/upload", controllers.UploadPDF)
+        // authorized.GET("/books/:id/download", controllers.DownloadPDF)
+    }
+    return r
 }
