@@ -11,7 +11,7 @@ import (
 
 
 func FindBooks(c *gin.Context) {
-	rows, err := config.DB.Query("SELECT id, title, author, year FROM books");
+	rows, err := config.DB.Query("SELECT id, title, author, year,cover,pdf_path FROM books");
 	if err != nil {
 		c.JSON(http.StatusInternalServerError,gin.H{"error": "Something went wrong from our side"});
 		return;
@@ -20,7 +20,7 @@ func FindBooks(c *gin.Context) {
 	books := []models.Book{};
 	for rows.Next() {
 		var book models.Book;
-		if err := rows.Scan(&book.ID,&book.Title,&book.Author,&book.Year); err != nil {
+		if err := rows.Scan(&book.ID,&book.Title,&book.Author,&book.Year,&book.Cover,&book.PDFPath); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return;
 		}
@@ -29,29 +29,29 @@ func FindBooks(c *gin.Context) {
 	c.JSON(http.StatusOK,gin.H{"books":books});
 }
 
+
 func CreateBook(c *gin.Context) {
 	var input models.Book;
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return;
 	}
-	query := "INSERT INTO books (title, author, year) VALUES ($1,$2,$3) RETURNING id";
-	err := config.DB.QueryRow(query, input.Title, input.Author, input.Year).Scan(&input.ID);
+	query := "INSERT INTO books (title, author, year, cover, pdf_path) VALUES ($1,$2,$3,$4,$5) RETURNING id";
+	err := config.DB.QueryRow(query, input.Title, input.Author, input.Year,input.Cover,input.PDFPath).Scan(&input.ID);
 	if err != nil {
         c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
         return
     }
 	c.JSON(http.StatusOK, gin.H{"book": input});
 }
-
 func UpdateBook(c *gin.Context) {
 	var input models.Book;
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error":"please provide all the information"});
 		return;
 	}
-	query := "UPDATE books SET title=$1, author=$2, year=$3 WHERE id=$4";
-	_, err := config.DB.Exec(query,input.Title,input.Author,input.Year, c.Param("id"));
+	query := "UPDATE books SET title=$1, author=$2, year=$3, cover=$4, pdf_path=$5  WHERE id=$4";
+	_, err := config.DB.Exec(query,input.Title,input.Author,input.Year, input.Cover, input.PDFPath, c.Param("id"));
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error});
 		return;
@@ -64,7 +64,7 @@ func FindBook(c *gin.Context) {
 	var book models.Book;
 	query := "SELECT * FROM books WHERE id=$1";
 	row := config.DB.QueryRow(query, c.Param("id"));
-	err := row.Scan(&book.ID,&book.Title,&book.Author,&book.Year);
+	err := row.Scan(&book.ID,&book.Title,&book.Author,&book.Year, &book.Cover, &book.PDFPath);
 	if err != nil {
         if err == sql.ErrNoRows {
             c.JSON(http.StatusNotFound, gin.H{"error": "Book not found!"});

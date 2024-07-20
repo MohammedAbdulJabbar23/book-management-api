@@ -16,6 +16,8 @@ func SetupRouter() *gin.Engine {
     {
         authorized.POST("/books", controllers.CreateBook);
         authorized.GET("/books", controllers.FindBooks);
+        authorized.GET("/books/:id",controllers.FindBook);
+        authorized.DELETE("/books/:id",controllers.DeleteBook);
         // authorized.POST("/books/:id/upload", controllers.UploadPDF)
         // authorized.GET("/books/:id/download", controllers.DownloadPDF)
     }
